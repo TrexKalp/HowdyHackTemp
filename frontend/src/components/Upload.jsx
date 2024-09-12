@@ -84,6 +84,54 @@ const Upload = () => {
     return match ? parseFloat(match[2]) : null;
   };
 
+  const validateReceipt = (text) => {
+    // This pattern now looks for both "Receipt #" or "Order #"
+    const numberPattern = /(?:Order|Receipt)[ \t]*(?:Number|#)?:[ \s]*([0-9]+)/i;
+    // TODO: Check if store is a valid store
+
+    let isValidStore = false;
+    const validStores = [
+      "Sweet Eugene's",
+      "The Beef and Reef Food Truck",
+      "1541 Pastries and Coffee",
+      "Sabi Boutique",
+      "Stampede College Station",
+      "Maroon & White Barbershop",
+      "Stella Southern Cafe",
+      "Raging Bull Street Taco's",
+      "Kolache Rolf's",
+      "E11even Bar and Grill",
+      "Aggieland Scuba",
+      "A Wild Hair Salon & Co",
+      "What's The Buzz Specialty Coffee",
+      "Brazos Cedar Works",
+      "BonAppeTea",
+      "The Village Cafe",
+      "Gomez Shoe Repair",
+      "Burdett & Son Outdoor Adventure Shop",
+      "M&M Apparel",
+      "Bea's Alterations",
+      "BCS Asian Market",
+      "iPhở",
+      "University Flowers",
+      "Brazos Valley Computers",
+      "The String & Horn Shop",
+      "Zeitman's Grocery Store",
+      "Thorn Music Center"
+    ];
+
+    for (let i = 0; i < validStores.length; i++) {
+      if (text.contains(validStores[i])) {
+        isValidStore = true;
+        break;
+      }
+    }
+
+    const match = text.match(numberPattern);
+
+    return match && isValidStore;
+  };
+
   const [recognizedTexts, setRecognizedTexts] = useState(() => {
     const savedTexts = localStorage.getItem("recognizedTexts");
     return savedTexts ? JSON.parse(savedTexts) : [];
@@ -94,6 +142,16 @@ const Upload = () => {
       try {
         const result = await Tesseract.recognize(selectedImage, "eng");
 
+        if (!validateReceipt(result.data.text)) {
+          toast({
+            title: "Invalid Receipt",
+            description: "This receipt is not valid. Please note that only receipts from small businesses are accepted.",
+            status: "warning",
+            duration: 2000,
+            isClosable: true,
+          });
+          return;
+        }
         // Check if the text has been recognized before
         if (recognizedTexts.includes(result.data.text)) {
           toast({
